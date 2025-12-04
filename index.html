@@ -1,1 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Final Project — 3D Maze Game (SDL3 + OpenGL)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050608;
+      --bg-alt: #101218;
+      --accent: #4caf50;
+      --accent2: #ff9800;
+      --accent3: #03a9f4;
+      --text: #f5f5f5;
+      --muted: #bbbbbb;
+      --border: #2a2f3a;
+      --card-radius: 14px;
+      --shadow: 0 14px 35px rgba(0, 0, 0, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #182133 0, #050608 55%);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 32px 16px 64px;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      letter-spacing: 0.03em;
+      margin-bottom: 0.35rem;
+    }
+
+    header h2 {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    header .course {
+      font-size: 0.95rem;
+      color: var(--accent3);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 22px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: linear-gradient(145deg, #141925, #090b12);
+      border-radius: var(--card-radius);
+      padding: 18px 20px 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--muted);
+      margin-right: 6px;
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    p {
+      margin-bottom: 0.35rem;
+      font-size: 0.95rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    ul {
+      list-style: none;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 16px;
+      font-size: 0.94rem;
+      margin: 3px 0;
+    }
+
+    ul li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      top: -1px;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
+    .tag {
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--muted);
+    }
+
+    .tag.green {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tag.orange {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .tag.blue {
+      border-color: var(--accent3);
+      color: var(--accent3);
+    }
+
+    .checklist {
+      margin-top: 6px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 3px 0;
+      font-size: 0.93rem;
+    }
+
+    .check-item span.icon {
+      margin-top: 2px;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+
+    .warn {
+      color: #ffcc80;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr;
+      gap: 8px 18px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 700px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .control-row {
+      display: flex;
+      gap: 5px;
+      font-size: 0.9rem;
+      align-items: center;
+    }
+
+    kbd {
+      display: inline-block;
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 1px 7px;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .media-placeholder {
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background: #0b0f18;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .media-placeholder code {
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.1fr 1.2fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>3D Maze Game</h1>
+      <h2>SDL3 + OpenGL Final Project</h2>
+      <div class="course">Real-time textured maze with jumping, keys/doors, NPC, and power-ups</div>
+    </header>
+
+    <main>
+      <!-- LEFT COLUMN -->
+      <section class="card">
+        <h3>Project Summary</h3>
+
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>Fully navigable 3D maze with interaction</span>
+        </div>
+
+        <p>
+          This project implements a complete 3D maze game using SDL3 and OpenGL. The maze features textured
+          walls and floors, colored keys and doors, smooth keyboard movement, collision detection, and
+          realistic jumping based on gravity and vertical velocity.
+        </p>
+        <p>
+          Two OBJ models are loaded: a tree placed near the goal, and a Kodama NPC that moves left and
+          right in front of Door A. If the player collides with the Kodama, the game resets and a
+          game-over message is printed. I also created two rotating power-up items: the green power-up
+          grants a speed boost, and the orange power-up increases jump height.
+        </p>
+        <p>
+          Each door type has a distinct shape, and doors slide smoothly to the right when unlocked. Walls
+          and floors use separate textures, and each key matches the color of its corresponding door. Two
+          full gameplay videos (<code>test0</code> and <code>test1</code>) demonstrate all features
+          more clearly than static screenshots.
+        </p>
+
+        <p class="muted">
+          I experimented with fixed-pipeline point lights above doors, but the lighting behaved
+          inconsistently when the camera moved, so that feature is only partially working. Mouse controls
+          and bump mapping were also attempted but not completed due to time and pipeline limitations.
+        </p>
+
+        <div class="tag-row">
+          <span class="tag green">SDL3</span>
+          <span class="tag blue">OpenGL</span>
+          <span class="tag">Texturing</span>
+          <span class="tag">OBJ loading</span>
+          <span class="tag orange">Gameplay logic</span>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN -->
+      <aside class="card">
+        <h3>How to Play</h3>
+        <p class="muted">Basic controls and gameplay goals.</p>
+
+        <div class="controls-grid">
+          <div>
+            <div class="control-row">
+              <kbd>W</kbd> / <kbd>S</kbd> <span>Move forward / backward</span>
+            </div>
+            <div class="control-row">
+              <kbd>A</kbd> / <kbd>D</kbd> <span>Strafe left / right (or rotate, depending on setup)</span>
+            </div>
+            <div class="control-row">
+              <kbd>Space</kbd> <span>Jump (with gravity &amp; vertical velocity)</span>
+            </div>
+          </div>
+          <div>
+            <div class="control-row">
+              <kbd>E</kbd> (or key) <span>Pick up colored key</span>
+            </div>
+            <div class="control-row">
+              <kbd>E</kbd> near door <span>Unlock matching door and trigger slide animation</span>
+            </div>
+            <div class="control-row">
+              <kbd>ESC</kbd> <span>Quit game</span>
+            </div>
+          </div>
+        </div>
+
+        <ul>
+          <li>Collect colored keys that match the colored doors.</li>
+          <li>Avoid the moving Kodama in front of Door A – collision causes immediate game over and reset.</li>
+          <li>Touch the green power-up for speed boost, and the orange power-up for higher jumps.</li>
+          <li>Navigate the maze, pass through all required doors, and reach the goal near the tree model.</li>
+        </ul>
+
+        <div class="media-placeholder">
+          <strong>Gameplay Videos:</strong><br />
+          Replace with your actual embedded media, for example:
+          <br /><br />
+          <code>&lt;video src="test0.mp4" controls width="100%"&gt;&lt;/video&gt;</code><br />
+          <code>&lt;video src="test1.mp4" controls width="100%"&gt;&lt;/video&gt;</code><br /><br />
+          <strong>Or view the video on Google Drive:</strong><br />
+          <a href="https://drive.google.com/file/d/1jUQFGNmlrFxHbHtGatgB5fsmlx9Kt1j5/view?usp=sharing" target="_blank" rel="noopener noreferrer">
+            Full gameplay video (Drive link)
+          </a>
+        </div>
+      </aside>
+    </main>
+
+    <!-- SECOND ROW -->
+    <section class="two-col" style="margin-top: 22px;">
+      <div class="card">
+        <h3>Graphics &amp; Engine Details</h3>
+        <p>
+          The game is built on top of SDL3 and the fixed-function OpenGL pipeline. The camera and player
+          motion are updated every frame, and the maze geometry is rendered with distinct textured walls and
+          floors. Collision detection prevents the player from walking through walls or doors that are still
+          locked.
+        </p>
+
+        <ul>
+          <li>Textured walls and floors using separate texture maps.</li>
+          <li>Color-coded keys and doors, with matching door unlocking logic.</li>
+          <li>Each door uses a different mesh shape and slides smoothly to the right along its local axis.</li>
+          <li>Jumping uses a vertical velocity + gravity update each frame for smooth arcs.</li>
+          <li>Power-ups are transformed over time to slowly rotate, making them visually stand out.</li>
+        </ul>
+
+        <p>
+          Two OBJ models are loaded and rendered: a tree near the goal area and a Kodama NPC that patrols in
+          front of Door A by moving left and right between two points.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Extra Credit Features Implemented</h3>
+        <p class="muted">Completed extra features for this project:</p>
+
+        <div class="checklist">
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Texture-mapped walls and floors</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Smooth, realistic jumping (gravity + vertical velocity)</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Moving NPC (Kodama) patrolling in front of a door</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Character interaction (game over on collision with Kodama)</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Power-ups that alter abilities (speed boost &amp; higher jump)</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Animated sliding doors when unlocked</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Loading and rendering multiple OBJ models (tree + Kodama)</span>
+          </div>
+          <div class="check-item">
+            <span class="icon">✔</span>
+            <span>Two full gameplay videos (test0 &amp; test1) demonstrating all features</span>
+          </div>
+        </div>
+
+        <p style="margin-top: 10px;">
+          <span class="warn">Partially attempted:</span> Fixed-pipeline point lights above doors (lighting works
+          but behaves inconsistently when the camera moves). Mouse controls and bump mapping were also explored
+          but not finished due to time and pipeline limitations.
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        Final Project — 3D Maze Game (SDL3 + OpenGL)
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
 
